@@ -1,7 +1,7 @@
 import sys
 
 if len(sys.argv) < 3:
-    print("Ouech faut des parametres fdp")
+    print("usage : python3 ")
 
 
 filepath, p = sys.argv[1:]
