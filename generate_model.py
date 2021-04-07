@@ -47,7 +47,16 @@ S_k = liste de centre trop proche qui ont donc une penalite
 p_k = penalite si trop proche
 (faut relire les penalites j'ai pas tout compris)
 
-But minimise le cout total 
+But minimise le cout total
 
 famille pas d'office affecte au centre le plus proches car c_j est plus important
+
+pour 0 < j < len(J)
+    Binary exist_j # {0,1} vu que binaire
+    Binary i_j
+
+    total += exist_j * (f_j) + i_j * (t_ij)
+
+    capacite_total >= tout les d_i
+    capacite_site >= toute les familles qui lui sont lie => donc pas lier des famille si capacite trop petite
 """
