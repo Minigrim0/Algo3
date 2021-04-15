@@ -68,6 +68,15 @@ with open(filepath) as f:
         vaccins_suffisants = model.sum(list_vaccins_suffisants)
         model.add_constraint(vaccins_suffisants - (c_j[j] * list_e[j]) <= 0, f"Centre {j} possede assez de vaccins (et existe)")
 
+    if p == "1":
+        # Création des variables contraintes si au moins 2 site sont trop proches
+        apply_pen_list = model.binary_var_list(K, name="apply_pen")
+        for index, s_k in enumerate(list_S_k):  # Chaque groupe de centres considérés trop proches
+            center_count_list = []
+            for j in s_k:
+                center_count_list.append(list_e[j])
+            center_count = model.sum(center_count_list)
+            model.add_indicator((center_count >= 2), apply_pen_list[index] == 1)
 
     # COÛTS #
 
@@ -85,7 +94,14 @@ with open(filepath) as f:
     model.add_kpi(model.total_constru, "Total des couts de construction")
     model.add_kpi(model.total_trajet, "Total des couts des trajets des familles")
 
-    model.minimize(model.total_constru + model.total_trajet)
+    if p == '1':
+        # Contrainte de proximité
+        list_penalite = [a * b for a, b in zip(apply_pen_list, list_pen_costs)]
+        model.total_penalite = model.sum(list_penalite)
+        model.add_kpi(model.total_penalite, "Penalite due a des centres trop proches")
+        model.minimize(model.total_constru + model.total_trajet + model.total_penalite)
+    else:
+        model.minimize(model.total_constru + model.total_trajet)
 
     model.export_as_lp(basename="foo", path=".")
     # print(model.export_as_lp_string())
