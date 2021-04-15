@@ -85,7 +85,7 @@ with open(filepath) as f:
     model.add_kpi(model.total_constru, "Total des couts de construction")
     model.add_kpi(model.total_trajet, "Total des couts des trajets des familles")
 
-        model.minimize(model.total_constru + model.total_trajet)
+    model.minimize(model.total_constru + model.total_trajet)
 
     model.export_as_lp(basename="foo", path=".")
     # print(model.export_as_lp_string())
