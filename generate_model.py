@@ -50,7 +50,7 @@ with open(filepath) as f:
 
     # CONTRAINTES #
 
-    # Vérifier que les familles sont bien associées à un et un seul centre
+    # 1) Vérifier que les familles sont bien associées à un et un seul centre
     for i in range(I):
         only_1_list = []
         for j in range(J):
@@ -58,7 +58,7 @@ with open(filepath) as f:
         only_1 = model.sum(only_1_list)
         model.add_constraint(only_1 == 1, f"Famille {i} associe a seulement un centre")
 
-    # Doses suffisantes dans les centres
+    # 2) Doses suffisantes dans les centres
     for j in range(J):
         list_vaccins_suffisants = []
         for i in range(I):
@@ -69,25 +69,26 @@ with open(filepath) as f:
         model.add_constraint(vaccins_suffisants - (c_j[j] * list_e[j]) <= 0, f"Centre {j} possede assez de vaccins (et existe)")
 
     if p == "1":
-        # Création des variables contraintes si au moins 2 site sont trop proches
+        # 3) Création des variables contraintes si au moins 2 site sont trop proches
         apply_pen_list = model.binary_var_list(K, name="apply_pen")
+        model.M = J+1
         for index, s_k in enumerate(list_S_k):  # Chaque groupe de centres considérés trop proches
             center_count_list = []
             for j in s_k:
                 center_count_list.append(list_e[j])
             center_count = model.sum(center_count_list)
-            model.add_indicator((center_count >= 2), apply_pen_list[index] == 1)
+            model.add_constraint(center_count - model.M*apply_pen_list[index] <= 1)
 
     # COÛTS #
 
-    # Coûts des trajets
+    # 1) Coûts des trajets
     list_resultat = []
     for index, value in model.l_i_j.items():  # index is (i, j)
         list_resultat.append(value * model.t_i_j[index[0]][index[1]])
 
     model.total_trajet = model.sum(list_resultat)
 
-    # Frais de construction
+    # 2) Frais de construction
     frais_constru = [a * b for a, b in zip(list_e, f_j)]
     model.total_constru = model.sum(frais_constru)
 
@@ -95,7 +96,7 @@ with open(filepath) as f:
     model.add_kpi(model.total_trajet, "Total des couts des trajets des familles")
 
     if p == '1':
-        # Contrainte de proximité
+        # 3) Contrainte de proximité
         list_penalite = [a * b for a, b in zip(apply_pen_list, list_pen_costs)]
         model.total_penalite = model.sum(list_penalite)
         model.add_kpi(model.total_penalite, "Penalite due a des centres trop proches")
@@ -104,36 +105,3 @@ with open(filepath) as f:
         model.minimize(model.total_constru + model.total_trajet)
 
     model.export_as_lp(basename="foo", path=".")
-    # print(model.export_as_lp_string())
-
-
-"""
-centre = un site construit
-j = un site
-J = ensemble de sites possibles
-f_j = cout de construction du site j
-c_j = capacite maximal de doses du centre j (0 si site mais pas centre)
-
-i = une famille
-I = L'ensemble des familles
-t_ij =  cout trajet de la famille i vers le centre j
-d_i = la demande de dose de la famille i
-
-
-S_k = liste de centre trop proche qui ont donc une penalite
-p_k = penalite si trop proche
-(faut relire les penalites j'ai pas tout compris)
-
-But minimise le cout total
-
-famille pas d'office affecte au centre le plus proches car c_j est plus important
-
-pour 0 < j < len(J)
-    Binary exist_j # {0,1} vu que binaire
-    Binary i_j
-
-    total += exist_j * (f_j) + i_j * (t_ij)
-
-    capacite_total >= tout les d_i
-    capacite_site >= toute les familles qui lui sont lie => donc pas lier des famille si capacite trop petite
-"""
